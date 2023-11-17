@@ -4,15 +4,25 @@ import boto3
 from cryptography.fernet import Fernet
 from botocore.exceptions import NoCredentialsError
 
+
 def generate_key():
     """ Generate a key and save it into a file """
     key = Fernet.generate_key()
     with open("secret.key", "wb") as key_file:
         key_file.write(key)
+    return key.decode()
+
+
+def show_generated_key():
+    generated_key = generate_key()
+    messagebox.showinfo(
+        "Generated Key", f"Your generated key is:\n{generated_key}")
+
 
 def load_key():
     """ Load the previously generated key """
     return open("secret.key", "rb").read()
+
 
 def encrypt(filename, key):
     """ Encrypt the file using the provided key """
@@ -33,9 +43,10 @@ def decrypt(filename, key):
     with open(filename, "wb") as file:
         file.write(decrypted_data)
 
+
 def get_s3_files(bucket, access_key, secret_key, region):
-    s3 = boto3.client('s3', aws_access_key_id=access_key, 
-                      aws_secret_access_key=secret_key, 
+    s3 = boto3.client('s3', aws_access_key_id=access_key,
+                      aws_secret_access_key=secret_key,
                       region_name=region)
     try:
         response = s3.list_objects_v2(Bucket=bucket)
@@ -46,6 +57,7 @@ def get_s3_files(bucket, access_key, secret_key, region):
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {e}")
         return []
+
 
 def download_from_s3(access_key, secret_key, region, bucket, file_key, download_path):
     s3 = boto3.client('s3', aws_access_key_id=access_key,
@@ -60,6 +72,7 @@ def download_from_s3(access_key, secret_key, region, bucket, file_key, download_
     except NoCredentialsError:
         return "Credentials not available"
 
+
 def refresh_file_list():
     bucket = aws_bucket_entry_download.get()
     access_key = aws_access_key_entry_download.get()
@@ -71,10 +84,12 @@ def refresh_file_list():
     for file in files:
         file_list.insert(tk.END, file)
 
+
 def download_selected_file():
     selected_file = file_list.get(tk.ANCHOR)
     if selected_file:
-        save_path = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("All files", "*.*")])
+        save_path = filedialog.asksaveasfilename(
+            defaultextension=".txt", filetypes=[("All files", "*.*")])
         if save_path:
             access_key = aws_access_key_entry_download.get()
             secret_key = aws_secret_key_entry_download.get()
@@ -82,13 +97,15 @@ def download_selected_file():
             bucket = aws_bucket_entry_download.get()
             user_key = user_key_entry_download.get()  # 获取用户提供的密钥
 
-            result = download_from_s3(access_key, secret_key, region, bucket, selected_file, save_path)
+            result = download_from_s3(
+                access_key, secret_key, region, bucket, selected_file, save_path)
             decrypt(save_path, user_key.encode())  # 使用用户密钥解密文件
             messagebox.showinfo("Result", result)
         else:
-            messagebox.showerror("Error", "No file selected or missing information")
+            messagebox.showerror(
+                "Error", "No file selected or missing information")
 
-                
+
 def upload_to_s3(access_key, secret_key, region, bucket, file_path):
     s3 = boto3.client('s3', aws_access_key_id=access_key,
                       aws_secret_access_key=secret_key, region_name=region)
@@ -97,16 +114,19 @@ def upload_to_s3(access_key, secret_key, region, bucket, file_path):
         encrypt(file_path, key)
         filename = file_path.split("/")[-1]
         s3.upload_file(file_path, bucket, filename)
-        decrypt(file_path, key)  # Optionally, decrypt after upload for local use
+        # Optionally, decrypt after upload for local use
+        decrypt(file_path, key)
         return "Upload Successful"
     except FileNotFoundError:
         return "The specified file was not found"
     except NoCredentialsError:
         return "Credentials not available"
 
+
 def select_file_to_upload():
     file_path = filedialog.askopenfilename()
     file_path_label.config(text="Selected: " + file_path)
+
 
 def submit_upload_to_s3():
     file_path = file_path_label.cget("text").replace("Selected: ", "")
@@ -118,14 +138,18 @@ def submit_upload_to_s3():
         user_key = user_key_entry.get()  # 获取用户提供的密钥
 
         encrypt(file_path, user_key.encode())  # 使用用户密钥加密文件
-        result = upload_to_s3(access_key, secret_key, region, bucket, file_path)
+        result = upload_to_s3(access_key, secret_key,
+                              region, bucket, file_path)
         messagebox.showinfo("Result", result)
         decrypt(file_path, user_key.encode())  # 完成后解密文件（可选）
     else:
-        messagebox.showerror("Error", "No file selected or missing information")
-        
+        messagebox.showerror(
+            "Error", "No file selected or missing information")
+
+
 def show_frame(frame):
     frame.tkraise()
+
 
 root = tk.Tk()
 root.title("S3 File Manager")
@@ -149,10 +173,10 @@ for frame in (main_frame, upload_frame, download_frame):
 # 主页
 main_label = tk.Label(main_frame, text="Select an Option")
 main_label.pack(pady=10)
-upload_button = tk.Button(main_frame, text="Upload File", 
+upload_button = tk.Button(main_frame, text="Upload File",
                           command=lambda: show_frame(upload_frame))
 upload_button.pack()
-download_button = tk.Button(main_frame, text="Download File", 
+download_button = tk.Button(main_frame, text="Download File",
                             command=lambda: show_frame(download_frame))
 download_button.pack()
 
@@ -184,23 +208,28 @@ aws_bucket_entry.pack()
 file_path_label = tk.Label(upload_frame, text="No file selected")
 file_path_label.pack()
 
-select_file_button = tk.Button(upload_frame, text="Select File", command=select_file_to_upload)
+select_file_button = tk.Button(
+    upload_frame, text="Select File", command=select_file_to_upload)
 select_file_button.pack()
+
+generate_key_button = tk.Button(
+    upload_frame, text="Generate Encryption Key", command=show_generated_key)
+generate_key_button.pack()
+
 
 user_key_label = tk.Label(upload_frame, text="Encryption Key")
 user_key_label.pack()
 user_key_entry = tk.Entry(upload_frame, show="*")
 user_key_entry.pack()
 
-upload_button = tk.Button(upload_frame, text="Upload File", command=submit_upload_to_s3)
+upload_button = tk.Button(
+    upload_frame, text="Upload File", command=submit_upload_to_s3)
 upload_button.pack()
 
 
-back_button_upload = tk.Button(upload_frame, text="Back to Main Menu", 
+back_button_upload = tk.Button(upload_frame, text="Back to Main Menu",
                                command=lambda: show_frame(main_frame))
 back_button_upload.pack()
-
-
 
 
 # 下载页面
@@ -208,12 +237,14 @@ download_label = tk.Label(download_frame, text="Download Page")
 download_label.pack(pady=10)
 # 下载功能的其它组件将在这里添加
 
-aws_access_key_label_download = tk.Label(download_frame, text="AWS Access Key ID")
+aws_access_key_label_download = tk.Label(
+    download_frame, text="AWS Access Key ID")
 aws_access_key_label_download.pack()
 aws_access_key_entry_download = tk.Entry(download_frame)
 aws_access_key_entry_download.pack()
 
-aws_secret_key_label_download = tk.Label(download_frame, text="AWS Secret Access Key")
+aws_secret_key_label_download = tk.Label(
+    download_frame, text="AWS Secret Access Key")
 aws_secret_key_label_download.pack()
 aws_secret_key_entry_download = tk.Entry(download_frame, show="*")
 aws_secret_key_entry_download.pack()
@@ -236,10 +267,11 @@ aws_bucket_entry_download.pack()
 file_list = Listbox(download_frame)
 file_list.pack(fill=tk.BOTH, expand=True)
 
-refresh_button = tk.Button(download_frame, text="Refresh File List", command=refresh_file_list)
+refresh_button = tk.Button(
+    download_frame, text="Refresh File List", command=refresh_file_list)
 refresh_button.pack()
 
-back_button_download = tk.Button(download_frame, text="Back to Main Menu", 
+back_button_download = tk.Button(download_frame, text="Back to Main Menu",
                                  command=lambda: show_frame(main_frame))
 back_button_download.pack()
 
