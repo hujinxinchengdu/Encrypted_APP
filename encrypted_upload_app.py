@@ -1,3 +1,4 @@
+# Import necessary modules
 import tkinter as tk
 from tkinter import filedialog, messagebox, Listbox, Scrollbar
 import boto3
@@ -5,6 +6,7 @@ from cryptography.fernet import Fernet
 from botocore.exceptions import NoCredentialsError
 
 
+# Function to generate and save an encryption key
 def generate_key():
     """ Generate a key and save it into a file """
     key = Fernet.generate_key()
@@ -13,17 +15,20 @@ def generate_key():
     return key.decode()
 
 
+# Function to show generated key
 def show_generated_key():
     generated_key = generate_key()
     messagebox.showinfo(
         "Generated Key", f"Your generated key is:\n{generated_key}")
 
 
+# Function to load a previously generated key
 def load_key():
     """ Load the previously generated key """
     return open("secret.key", "rb").read()
 
 
+# Function to encrypt a file using a provided key
 def encrypt(filename, key):
     """ Encrypt the file using the provided key """
     f = Fernet(key)
@@ -34,6 +39,7 @@ def encrypt(filename, key):
         file.write(encrypted_data)
 
 
+# Function to decrypt a file using a provided key
 def decrypt(filename, key):
     """ Decrypt the file using the provided key """
     f = Fernet(key)
@@ -44,6 +50,7 @@ def decrypt(filename, key):
         file.write(decrypted_data)
 
 
+# Function to get a list of files from an S3 bucket
 def get_s3_files(bucket, access_key, secret_key, region):
     s3 = boto3.client('s3', aws_access_key_id=access_key,
                       aws_secret_access_key=secret_key,
@@ -59,6 +66,7 @@ def get_s3_files(bucket, access_key, secret_key, region):
         return []
 
 
+# Function to download a file from S3 and decrypt it
 def download_from_s3(access_key, secret_key, region, bucket, file_key, download_path):
     s3 = boto3.client('s3', aws_access_key_id=access_key,
                       aws_secret_access_key=secret_key, region_name=region)
@@ -73,6 +81,7 @@ def download_from_s3(access_key, secret_key, region, bucket, file_key, download_
         return "Credentials not available"
 
 
+# Function to refresh the file list in the download frame
 def refresh_file_list():
     bucket = aws_bucket_entry_download.get()
     access_key = aws_access_key_entry_download.get()
@@ -85,6 +94,7 @@ def refresh_file_list():
         file_list.insert(tk.END, file)
 
 
+# Function to download the selected file
 def download_selected_file():
     selected_file = file_list.get(tk.ANCHOR)
     if selected_file:
@@ -110,6 +120,7 @@ def download_selected_file():
         messagebox.showerror("Error", "No file selected or missing S3 information")
 
 
+# Function to upload a file to S3
 def upload_to_s3(access_key, secret_key, region, bucket, file_path):
     s3 = boto3.client('s3', aws_access_key_id=access_key,
                       aws_secret_access_key=secret_key, region_name=region)
@@ -127,11 +138,13 @@ def upload_to_s3(access_key, secret_key, region, bucket, file_path):
         return "Credentials not available"
 
 
+# Function to select a file for upload
 def select_file_to_upload():
     file_path = filedialog.askopenfilename()
     file_path_label.config(text="Selected: " + file_path)
 
 
+# Function to submit the file upload to S3
 def submit_upload_to_s3():
     file_path = file_path_label.cget("text").replace("Selected: ", "")
     if file_path and file_path != "No file selected":
@@ -151,10 +164,12 @@ def submit_upload_to_s3():
             "Error", "No file selected or missing information")
 
 
+# Function to switch between frames
 def show_frame(frame):
     frame.tkraise()
 
 
+# Create the main Tkinter window
 root = tk.Tk()
 root.title("S3 File Manager")
 
@@ -167,10 +182,12 @@ center_x = int(screen_width/2 - window_width / 2)
 center_y = int(screen_height/2 - window_height / 2)
 root.geometry(f'{window_width}x{window_height}+{center_x}+{center_y}')
 
+# Create main, upload, and download frames
 main_frame = tk.Frame(root)
 upload_frame = tk.Frame(root)
 download_frame = tk.Frame(root)
 
+# Grid layout for frames
 for frame in (main_frame, upload_frame, download_frame):
     frame.grid(row=0, column=0, sticky='nsew')
 
