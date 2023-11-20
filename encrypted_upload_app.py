@@ -88,8 +88,9 @@ def refresh_file_list():
 def download_selected_file():
     selected_file = file_list.get(tk.ANCHOR)
     if selected_file:
-        save_path = filedialog.asksaveasfilename(
-            defaultextension=".txt", filetypes=[("All files", "*.*")])
+        # 让用户选择文件下载到哪里
+        save_path = filedialog.asksaveasfilename(defaultextension=".txt", 
+                                                 filetypes=[("All files", "*.*")])
         if save_path:
             access_key = aws_access_key_entry_download.get()
             secret_key = aws_secret_key_entry_download.get()
@@ -97,13 +98,16 @@ def download_selected_file():
             bucket = aws_bucket_entry_download.get()
             user_key = user_key_entry_download.get()  # 获取用户提供的密钥
 
-            result = download_from_s3(
-                access_key, secret_key, region, bucket, selected_file, save_path)
-            decrypt(save_path, user_key.encode())  # 使用用户密钥解密文件
-            messagebox.showinfo("Result", result)
+            result = download_from_s3(access_key, secret_key, region, bucket, selected_file, save_path)
+            try:
+                decrypt(save_path, user_key.encode())  # 使用用户密钥解密文件
+                messagebox.showinfo("Result", "Download and decryption successful")
+            except Exception as e:
+                messagebox.showerror("Error", f"Decryption failed: {str(e)}")
         else:
-            messagebox.showerror(
-                "Error", "No file selected or missing information")
+            messagebox.showerror("Error", "No save path selected")
+    else:
+        messagebox.showerror("Error", "No file selected or missing S3 information")
 
 
 def upload_to_s3(access_key, secret_key, region, bucket, file_path):
@@ -249,11 +253,6 @@ aws_secret_key_label_download.pack()
 aws_secret_key_entry_download = tk.Entry(download_frame, show="*")
 aws_secret_key_entry_download.pack()
 
-user_key_label_download = tk.Label(download_frame, text="Decryption Key")
-user_key_label_download.pack()
-user_key_entry_download = tk.Entry(download_frame, show="*")
-user_key_entry_download.pack()
-
 aws_region_label_download = tk.Label(download_frame, text="Region Name")
 aws_region_label_download.pack()
 aws_region_entry_download = tk.Entry(download_frame)
@@ -270,6 +269,15 @@ file_list.pack(fill=tk.BOTH, expand=True)
 refresh_button = tk.Button(
     download_frame, text="Refresh File List", command=refresh_file_list)
 refresh_button.pack()
+
+user_key_label_download = tk.Label(download_frame, text="Decryption Key")
+user_key_label_download.pack()
+user_key_entry_download = tk.Entry(download_frame, show="*")
+user_key_entry_download.pack()
+
+# 添加下载按钮
+download_button = tk.Button(download_frame, text="Download Selected File", command=download_selected_file)
+download_button.pack()
 
 back_button_download = tk.Button(download_frame, text="Back to Main Menu",
                                  command=lambda: show_frame(main_frame))
