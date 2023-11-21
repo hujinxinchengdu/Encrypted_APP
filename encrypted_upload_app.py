@@ -173,7 +173,7 @@ def show_frame(frame):
 root = tk.Tk()
 root.title("S3 File Manager")
 
-# 定义框架
+# Define frame
 window_width = 600
 window_height = 400
 screen_width = root.winfo_screenwidth()
@@ -191,7 +191,7 @@ download_frame = tk.Frame(root)
 for frame in (main_frame, upload_frame, download_frame):
     frame.grid(row=0, column=0, sticky='nsew')
 
-# 主页
+# Home Page
 main_label = tk.Label(main_frame, text="Select an Option")
 main_label.pack(pady=10)
 upload_button = tk.Button(main_frame, text="Upload File",
@@ -201,10 +201,10 @@ download_button = tk.Button(main_frame, text="Download File",
                             command=lambda: show_frame(download_frame))
 download_button.pack()
 
-# 上传页面
+# Upload Page
 upload_label = tk.Label(upload_frame, text="Upload Page")
 upload_label.pack(pady=10)
-# 上传功能的其它组件将在这里添加
+
 # AWS Credentials
 aws_access_key_label = tk.Label(upload_frame, text="AWS Access Key ID")
 aws_access_key_label.pack()
@@ -253,10 +253,10 @@ back_button_upload = tk.Button(upload_frame, text="Back to Main Menu",
 back_button_upload.pack()
 
 
-# 下载页面
+# Download Page
 download_label = tk.Label(download_frame, text="Download Page")
 download_label.pack(pady=10)
-# 下载功能的其它组件将在这里添加
+# Download Function
 
 aws_access_key_label_download = tk.Label(
     download_frame, text="AWS Access Key ID")
@@ -292,7 +292,6 @@ user_key_label_download.pack()
 user_key_entry_download = tk.Entry(download_frame, show="*")
 user_key_entry_download.pack()
 
-# 添加下载按钮
 download_button = tk.Button(download_frame, text="Download Selected File", command=download_selected_file)
 download_button.pack()
 
